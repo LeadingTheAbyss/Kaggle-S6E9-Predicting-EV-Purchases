@@ -1,0 +1,2 @@
+{"name": "baseline_raw", "description": "Exact repro of notebook's tuned CatBoost holdout run (no early stopping, 300 iters)", "mode": "holdout", "score": 0.9410766304010159, "extra": {"fit_seconds": 170.54496049880981}}
+{"name": "baseline_early_stop", "description": "Same as baseline but with early_stopping_rounds=50 on holdout eval_set (used for all later screening runs for speed)", "mode": "holdout", "score": 0.9410766304010159, "extra": {"fit_seconds": 136.68846368789673, "best_iteration": 299}}
