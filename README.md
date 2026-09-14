@@ -4,9 +4,9 @@
 
 Modeling consumer intent to buy an EV from tabular behavioral data.
 
-[![Competition](https://img.shields.io/badge/Kaggle-Playground_S6E9-20BEFF?logo=kaggle&logoColor=white)](https://www.kaggle.com/competitions/playground-series-s6e9)
-[![Metric](https://img.shields.io/badge/Metric-ROC--AUC-success)]()
-[![Notebook](https://img.shields.io/badge/Notebook-eda.ipynb-F37626?logo=jupyter&logoColor=white)](./eda.ipynb)
+[![Kaggle](https://img.shields.io/badge/Kaggle-Playground_S6E9-161b22?style=for-the-badge&logo=kaggle&logoColor=20BEFF&labelColor=161b22)](YOUR_LINK)
+[![Metric](https://img.shields.io/badge/Metric-ROC--AUC-161b22?style=for-the-badge&logo=target&logoColor=10b981&labelColor=161b22)](YOUR_LINK)
+[![Notebook](https://img.shields.io/badge/Notebook-eda.ipynb-161b22?style=for-the-badge&logo=jupyter&logoColor=F37626&labelColor=161b22)](YOUR_LINK)
 
 <img src="./public/img1.png" alt="Competition screenshot" width="700">
 
