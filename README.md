@@ -34,6 +34,36 @@ Target `Will_Buy_EV` is binary (`Yes` / `No`), scored on ROC-AUC.
 > [!NOTE]
 > Train: 668,665 rows. Test: 286,571 rows. No missing values, no leaked identifiers beyond `id`.
 
+## My Thought Process, Step-Wise
+
+A superficial, pointwise walk through how this project actually unfolded in `eda.ipynb`:
+
+1. Loaded `train.csv`, checked `.head()`, `.describe()`, and `.dtypes` to get a feel for the columns.
+2. Tried a **plain logistic regression** on one-hot encoded features. Got 0.90 ROC-AUC.
+3. Noticed the columns were on very different scales, so added `StandardScaler`. That jumped it to 0.93.
+4. Switched to **XGBoost** (no scaling needed). Reached ~0.94.
+5. Tried **CatBoost** too. About the same as XGBoost, close enough not to matter yet.
+6. Before tuning further, plotted a few boxplots to see how the data was actually distributed:
+
+   <img src="./public/plot_age_vs_target.png" alt="Age vs Will_Buy_EV boxplot" width="480">
+
+   Age didn't show an obvious split between buyers and non-buyers.
+
+   <img src="./public/plot_income_vs_target.png" alt="Annual Income vs Will_Buy_EV boxplot" width="480">
+
+   Income looked more promising. Buyers skew higher.
+
+   <img src="./public/plot_charging_vs_target.png" alt="Charging stations near home vs Will_Buy_EV boxplot" width="480">
+
+   Charging-station access didn't separate the classes much on its own.
+
+7. Went deeper on income with a quintile crosstab. Purchase probability rose monotonically from 6.5% to 31.3% across quintiles, confirming income as a strong signal.
+8. Checked `Subsidy_Available` the same way. Turned out to be even stronger: 0.6% buy without a subsidy vs. 27.5% with one.
+9. Built a proper CatBoost baseline on native categoricals (no one-hot encoding) and hit 0.941 ROC-AUC, submitted it (0.94083 on the public LB).
+10. Ran 5-fold CV to sanity-check the baseline wasn't a lucky split, then hand-tuned hyperparameters (depth, learning rate, L2, iterations, random strength, bagging temperature) one at a time.
+11. **Round 2:** found `id` was leaking train/test membership via adversarial validation, dropped it, added two feature ideas that actually helped (`Income_x_Subsidy`, ordinal range-anxiety), re-tuned, and moved CV from 0.941267 to 0.941841.
+12. **Round 3:** a public notebook credited digit decomposition for a big leaderboard jump. Tried it, and it was the single largest gain in the whole project. Added a LightGBM blend on top, landing at 0.943756 CV.
+
 ## Baseline: logistic regression
 
 One-hot encode categoricals with `pd.get_dummies`, fit a plain logistic regression: `P(Will_Buy_EV=1 | X) = sigmoid(w·X + b)`.
@@ -126,8 +156,7 @@ submission.to_csv("submission.csv", index = False)
 ## Round 2: feature engineering, alternative models, and a leakage fix
 
 Full experiment log (hypotheses, holdout screens, 5-fold confirmations) lives in `eda.ipynb`
-under "Feature Engineering & Model Experiments" and in `experiments/results.jsonl`. Headline
-findings:
+under "Feature Engineering & Model Experiments". Headline findings:
 
 - **`id` was leaking train/test split membership.** It was left in the feature set as a plain
   numeric column; test ids (668665+) are strictly higher than all train ids (0-668664), so
@@ -137,16 +166,15 @@ findings:
 - **Two feature ideas earned their place:** `Income_x_Subsidy` (income x subsidy-available flag)
   and an ordinal encoding of `Range_Anxiety_Level` (Low/Medium/High -> 0/1/2). Four other ideas
   (charging-infrastructure ratios, affordability ratios, a concern/anxiety cancellation feature,
-  a City_Type x Home_Charging combined categorical) came back flat -- CatBoost's trees already
+  a City_Type x Home_Charging combined categorical) came back flat. CatBoost's trees already
   reconstruct most of that signal on their own given enough depth.
 - **Hyperparameters were re-tuned for the new feature set** (depth=6, lr=0.1, l2=3,
   iterations=500 beat the old depth=8/iterations=300 config once `id` was gone).
 - **XGBoost (even with native categorical splits) and a CatBoost/XGBoost blend were both
-  tried** -- XGBoost trailed CatBoost, and the blend's marginal gain didn't justify running
+  tried.** XGBoost trailed CatBoost, and the blend's marginal gain didn't justify running
   two models for this dataset.
 - **Result:** 5-fold CV moved from 0.941267 -> **0.941841** (+0.00057), confirmed (not just a
   single holdout) and decomposed feature-by-feature so the gain is understood, not just chased.
-  Reproduce via `experiments/train_final_and_submit.py` -> `submission_v2.csv`.
 
 ## Round 3: digit decomposition + LightGBM blend
 
@@ -157,10 +185,10 @@ encoding for a 0.94590 LB score. Tested all three on top of the round-2 pipeline
 - **Digit decomposition** (splitting `Annual_Income_USD`, `Age`, `Daily_Commute_km` into
   per-digit-place integer columns) was the single largest gain found in this whole project:
   **+0.00137** confirmed with 5-fold CV. Feature importances show `Annual_Income_USD`'s digit
-  columns collectively outweigh the raw income column -- strong evidence this Playground-series
+  columns collectively outweigh the raw income column. That's strong evidence this Playground-series
   dataset was generated with a digit-level rule on income, an artifact of synthetic generation
   rather than a real-world pattern, but real and exploitable regardless.
-- Frequency encoding and out-of-fold target encoding of categoricals both came back flat --
+- Frequency encoding and out-of-fold target encoding of categoricals both came back flat.
   CatBoost's native categorical handling already captures that signal.
 - LightGBM, tried fresh on the expanded feature set, edged out CatBoost for the first time in
   this project, and a 0.3 CatBoost / 0.7 LightGBM blend beat both individually.
@@ -171,8 +199,9 @@ encoding for a 0.94590 LB score. Tested all three on top of the round-2 pipeline
 | Round 2 (leakage fix + 2 features + retune) | 0.941841 |
 | **Round 3 (+ digit decomposition + LightGBM blend)** | **0.943756** |
 
-**+0.00249 total gain.** `submission_v3.csv` is the candidate to submit next; regenerate it
-from scratch via `experiments/train_final_v3_and_submit.py`.
+**+0.00249 total gain.** The round-3 pipeline (`depth=7, lr=0.07, l2=4, iterations=700`
+CatBoost blended 0.3/0.7 with LightGBM `depth=7, lr=0.07, n_estimators=600`) is the
+candidate to submit next.
 
 ## Closing remarks
 
