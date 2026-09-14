@@ -176,7 +176,7 @@ under "Feature Engineering & Model Experiments". Headline findings:
 - **Result:** 5-fold CV moved from 0.941267 -> **0.941841** (+0.00057), confirmed (not just a
   single holdout) and decomposed feature-by-feature so the gain is understood, not just chased.
 
-## Round 3: digit decomposition + LightGBM blend
+## Round 3: Digit Decomposition + LightGBM Blend
 
 Prompted by a [public notebook](https://www.kaggle.com/competitions/playground-series-s6e9/discussion/741117)
 on this exact competition crediting digit decomposition, frequency encoding, and target
