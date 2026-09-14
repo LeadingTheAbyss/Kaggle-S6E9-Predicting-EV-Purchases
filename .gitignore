@@ -1,5 +1,9 @@
 train.csv
 test.csv
 submission.csv
+submission_v2.csv
+submission_v3.csv
 catboost_info/
 *.crdownload
+experiments/
+__pycache__/
