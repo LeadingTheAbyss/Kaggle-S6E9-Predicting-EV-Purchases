@@ -10,7 +10,7 @@ Modeling consumer intent to buy an EV from tabular behavioral data.
 
 <img src="./public/img1.png" alt="Competition screenshot" width="700">
 
-<a href="https://www.kaggle.com/competitions/playground-series-s6e9"><img src="https://kaggle.com/static/images/open-in-kaggle.svg" alt="Open in Kaggle"></a>
+[![Competition](https://img.shields.io/badge/Competition-Kaggle%20S6E9-161b22?style=for-the-badge&logo=kaggle&logoColor=20BEFF)](https://www.kaggle.com/competitions/playground-series-s6e9)
 
 [Competition](https://www.kaggle.com/competitions/playground-series-s6e9) · [Kaggle Profile](https://www.kaggle.com/Masochistic) · [GitHub](https://github.com/LeadingTheAbyss)
 
